@@ -3,6 +3,13 @@
 ## About
 **DocuSense** is a powerful Retrieval-Augmented Generation (RAG) application that allows you to chat intelligently with your PDF documents and scraped web pages. By leveraging state-of-the-art open-source LLMs through Groq, local HuggingFace embeddings, and MongoDB Atlas Vector Search, DocuSense extracts context-aware insights from your knowledge base with blazing fast performance.
 
+## Features
+- **Upload & Index PDFs:** Automatically chunk and embed PDF content.
+- **Scrape Websites:** Extract textual content from URLs (includes Playwright support for JS-heavy sites).
+- **Interactive Chat:** Ask questions and get answers cited directly from your indexed documents.
+- **Session Management:** Save, load, and manage your chat sessions.
+- **User Authentication:** Secure login and registration.
+
 ## Tech Stack
 - **Frontend:** React, Vite
 - **Backend:** Python, FastAPI
@@ -78,10 +85,3 @@
 4. Open [http://localhost:5174](http://localhost:5174) (or the port specified by Vite) in your browser.
 
 ---
-
-## Features
-- **Upload & Index PDFs:** Automatically chunk and embed PDF content.
-- **Scrape Websites:** Extract textual content from URLs (includes Playwright support for JS-heavy sites).
-- **Interactive Chat:** Ask questions and get answers cited directly from your indexed documents.
-- **Session Management:** Save, load, and manage your chat sessions.
-- **User Authentication:** Secure login and registration.
