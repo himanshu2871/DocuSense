@@ -1,52 +1,30 @@
 # DocuSense
 
-Chat with PDF documents and websites using HuggingFace embeddings, MongoDB Atlas Vector Search, and Groq AI.
+## About
+**DocuSense** is a powerful Retrieval-Augmented Generation (RAG) application that allows you to chat intelligently with your PDF documents and scraped web pages. By leveraging state-of-the-art open-source LLMs through Groq, local HuggingFace embeddings, and MongoDB Atlas Vector Search, DocuSense extracts context-aware insights from your knowledge base with blazing fast performance.
 
 ## Tech Stack
-
-| Layer        | Technology                                  |
-|--------------|---------------------------------------------|
-| Frontend     | React + Vite                                |
-| Backend      | Python + FastAPI                            |
-| Embeddings   | HuggingFace `all-MiniLM-L6-v2` (local)     |
-| Vector DB    | MongoDB Atlas Vector Search                 |
-| LLM          | Groq `mixtral-8x7b-32768` (32k context)    |
-| Web Scraping | BeautifulSoup (extendable to Playwright)    |
+- **Frontend:** React, Vite
+- **Backend:** Python, FastAPI
+- **Embeddings:** HuggingFace `all-MiniLM-L6-v2` (Local)
+- **Vector DB:** MongoDB Atlas Vector Search
+- **LLM:** Groq API (`llama-3.3-70b-versatile`)
+- **Scraping:** BeautifulSoup, Playwright
 
 ---
 
-## Project Structure
+## Setup & Installation
 
-```
-rag-app/
-├── backend/
-│   ├── main.py
-│   └── requirements.txt
-└── frontend/
-    ├── src/
-    │   ├── App.jsx
-    │   └── main.jsx
-    ├── index.html
-    ├── package.json
-    └── vite.config.js
-```
+### 1. Requirements
+- Node.js (v16+)
+- Python 3.10+
+- A [MongoDB Atlas](https://cloud.mongodb.com/) cluster (free tier works)
+- A [Groq API Key](https://console.groq.com/keys)
 
----
-
-## MongoDB Atlas Setup (required before running)
-
-### 1. Create a free cluster at https://cloud.mongodb.com
-
-### 2. Get your connection string
-- Go to: Cluster → Connect → Drivers
-- Copy the URI: `mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/`
-
-### 3. Create the Vector Search Index
-- In Atlas: Your Cluster → Search → Create Search Index
-- Choose: Atlas Vector Search
-- Database: `rag_app`, Collection: `chunks`
-- Paste this JSON:
-
+### 2. MongoDB Atlas Configuration
+1. Create a free cluster and get your connection string (`mongodb+srv://...`).
+2. Go to **Atlas Search** → **Create Search Index** → **Atlas Vector Search**.
+3. Select database `rag_app`, collection `documents` (or `chunks`), and use the following JSON:
 ```json
 {
   "fields": [
@@ -63,70 +41,47 @@ rag-app/
   ]
 }
 ```
+*Note: The index takes 1-3 minutes to become active.*
 
-- Name the index: `vector_index`
+### 3. Backend Setup
+1. Open a terminal and navigate to the `backend` directory.
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   # Windows: .\venv\Scripts\activate
+   # Mac/Linux: source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Create a `.env` file in the `backend` directory with your secrets:
+   ```env
+   MONGODB_URI="mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/?appName=Cluster0"
+   GROQ_API_KEY="gsk_your_api_key_here"
+   ```
+5. Start the backend server:
+   ```bash
+   python -m uvicorn main:app --reload --port 8000
+   ```
 
-> The index takes 1-3 minutes to become active.
-
----
-
-## Setup
-
-### Backend
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-
-pip install -r requirements.txt
-
-export MONGO_URI="mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/"
-export GROQ_API_KEY="gsk_..."    # https://console.groq.com
-
-uvicorn main:app --reload --port 8000
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open http://localhost:5173
-
----
-
-## API Endpoints
-
-| Method | Endpoint              | Description                    |
-|--------|-----------------------|--------------------------------|
-| GET    | `/`                   | Health check                   |
-| POST   | `/upload`             | Upload and index a PDF         |
-| POST   | `/scrape`             | Scrape and index a URL         |
-| POST   | `/chat`               | Ask a question                 |
-| GET    | `/documents`          | List all indexed sources       |
-| DELETE | `/documents/{doc_id}` | Remove a source                |
+### 4. Frontend Setup
+1. Open a new terminal and navigate to the `frontend` directory.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+4. Open [http://localhost:5174](http://localhost:5174) (or the port specified by Vite) in your browser.
 
 ---
 
-## Extending Web Scraping (JS-heavy sites)
-
-Install Playwright and replace the `requests` block in `scrape_url()`:
-
-```bash
-pip install playwright && playwright install chromium
-```
-
-```python
-from playwright.async_api import async_playwright
-async with async_playwright() as p:
-    browser = await p.chromium.launch()
-    page = await browser.new_page()
-    await page.goto(request.url)
-    await page.wait_for_load_state("networkidle")
-    html = await page.content()
-    await browser.close()
-```
+## Features
+- **Upload & Index PDFs:** Automatically chunk and embed PDF content.
+- **Scrape Websites:** Extract textual content from URLs (includes Playwright support for JS-heavy sites).
+- **Interactive Chat:** Ask questions and get answers cited directly from your indexed documents.
+- **Session Management:** Save, load, and manage your chat sessions.
+- **User Authentication:** Secure login and registration.
