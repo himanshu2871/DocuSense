@@ -1,0 +1,37 @@
+fastapi
+uvicorn[standard]
+python-multipart
+
+# MongoDB
+motor
+pymongo
+
+# Groq
+groq
+
+# Embeddings
+sentence-transformers
+
+# Vector DB
+chromadb
+
+# PDF
+PyPDF2
+
+# Web scraping
+httpx
+beautifulsoup4
+lxml
+playwright
+
+# Auth
+passlib[bcrypt]
+bcrypt==4.0.1
+python-jose[cryptography]
+
+# Config
+pydantic
+pydantic-settings
+
+# Dev utils
+python-dotenv

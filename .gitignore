@@ -1,0 +1,37 @@
+# Node
+node_modules/
+dist/
+build/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+.eggs/
+.cache/
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Local databases
+chroma_db/
+*.db
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# OS/IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
