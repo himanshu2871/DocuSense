@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback } from "react";
+import { API_BASE_URL } from "../config";
 
 const AuthContext = createContext(null);
 
@@ -28,7 +29,7 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setError("");
     try {
-      const res  = await fetch("http://localhost:8000/auth/login", {
+      const res  = await fetch(`${API_BASE_URL}/auth/login`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ email, password }),
@@ -51,7 +52,7 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setError("");
     try {
-      const res  = await fetch("http://localhost:8000/auth/register", {
+      const res  = await fetch(`${API_BASE_URL}/auth/register`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ email, username, password }),
@@ -74,7 +75,7 @@ export function AuthProvider({ children }) {
     try {
       const rt = getRefreshToken();
       if (rt) {
-        await fetch("http://localhost:8000/auth/logout", {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
           method:  "POST",
           headers: {
             "Content-Type":  "application/json",

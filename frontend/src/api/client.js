@@ -1,6 +1,7 @@
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "../context/AuthContext";
 
-const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import { API_BASE_URL } from "../config";
+const BASE = API_BASE_URL;
 let _onUnauthorized = null;
 
 export function setUnauthorizedHandler(fn) { _onUnauthorized = fn; }
@@ -22,7 +23,7 @@ async function refreshAccessToken() {
 }
 
 async function req(method, path, body, isFormData = false) {
-  const token   = getAccessToken();
+  const token = getAccessToken();
   const headers = isFormData ? {} : { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -78,11 +79,11 @@ export const api = {
     req("POST", `/sessions${docIds.length
       ? `?${docIds.map((d) => `doc_ids=${d}`).join("&")}`
       : ""}`),
-  listSessions:       () => req("GET", "/sessions"),
-  getSession:         (id) => req("GET", `/sessions/${id}`),
-  renameSession:      (id, title) =>
+  listSessions: () => req("GET", "/sessions"),
+  getSession: (id) => req("GET", `/sessions/${id}`),
+  renameSession: (id, title) =>
     req("PATCH", `/sessions/${id}/title?title=${encodeURIComponent(title)}`),
-  deleteSession:      (id) => req("DELETE", `/sessions/${id}`),
+  deleteSession: (id) => req("DELETE", `/sessions/${id}`),
   bulkDeleteSessions: (ids) =>
     req("DELETE", "/sessions/bulk", { session_ids: ids }),
 

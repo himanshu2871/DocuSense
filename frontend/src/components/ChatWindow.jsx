@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { API_BASE_URL } from "../config";
 import { getAccessToken } from "../context/AuthContext";
 import { MessageSquare, Paperclip, Send, Square, Menu, User, Bot, Globe, FileText } from "lucide-react";
 
-const BASE = "http://localhost:8000";
+const BASE = API_BASE_URL;
 
 export function ChatWindow({
   activeSession, messages, loading,
