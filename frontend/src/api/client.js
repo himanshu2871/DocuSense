@@ -1,6 +1,6 @@
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "../context/AuthContext";
 
-const BASE = "http://localhost:8000";
+const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 let _onUnauthorized = null;
 
 export function setUnauthorizedHandler(fn) { _onUnauthorized = fn; }

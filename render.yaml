@@ -1,0 +1,37 @@
+services:
+  # ── Backend Service ──
+  - type: web
+    name: docusense-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt && playwright install chromium && playwright install-deps"
+    startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    disk:
+      name: chroma-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: CHROMA_PERSIST_DIR
+        value: /var/data/chromadb
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+  # ── Frontend Static Site ──
+  - type: web
+    name: docusense-frontend
+    env: static
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: "./frontend/dist"
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: docusense-backend
+          envVar: RENDER_EXTERNAL_URL
