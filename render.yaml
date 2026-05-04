@@ -22,16 +22,3 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false
-
-  # ── Frontend Static Site ──
-  - type: web
-    name: docusense-frontend
-    env: static
-    buildCommand: "cd frontend && npm install && npm run build"
-    staticPublishPath: "./frontend/dist"
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          type: web
-          name: docusense-backend
-          envVar: RENDER_EXTERNAL_URL
