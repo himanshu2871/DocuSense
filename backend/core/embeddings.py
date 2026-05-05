@@ -4,7 +4,7 @@ from config import get_settings
 
 settings = get_settings()
 
-HF_API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{settings.EMBEDDING_MODEL}"
+HF_API_URL = f"https://api-inference.huggingface.co/models/{settings.EMBEDDING_MODEL}"
 HEADERS = {"Authorization": f"Bearer {settings.HF_TOKEN}"} if settings.HF_TOKEN else {}
 
 def embed_texts(texts: list[str], retries: int = 3) -> list[list[float]]:
