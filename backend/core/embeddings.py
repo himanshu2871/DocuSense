@@ -14,11 +14,13 @@ def embed_texts(texts: list[str], retries: int = 3) -> list[list[float]]:
 
     # If no token is provided, the API still works but is heavily rate-limited
     payload = {"inputs": texts, "options": {"wait_for_model": True}}
+    headers = HEADERS.copy()
+    headers["x-use-cache"] = "true"
     
     for i in range(retries):
         try:
             with httpx.Client(timeout=60.0) as client:
-                response = client.post(HF_API_URL, headers=HEADERS, json=payload)
+                response = client.post(HF_API_URL, headers=headers, json=payload)
                 response.raise_for_status()
                 return response.json()
         except Exception as e:
