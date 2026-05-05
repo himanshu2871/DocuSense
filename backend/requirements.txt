@@ -9,8 +9,7 @@ pymongo
 # Groq
 groq
 
-# Embeddings
-sentence-transformers
+# Embeddings (using cloud API)
 
 # Vector DB
 chromadb
