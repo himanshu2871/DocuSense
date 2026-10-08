@@ -1,6 +1,6 @@
 import httpx
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 import re
 
 HEADERS = {
@@ -67,6 +67,28 @@ async def scrape_url(url: str, timeout: int = 20) -> tuple[str, str]:
         timeout=timeout,
         verify=False,  # avoids SSL issues on Windows Python 3.12
     ) as client:
+        parsed = urlparse(url)
+        host = parsed.netloc.lower()
+        if (host == "wikipedia.org" or host.endswith(".wikipedia.org")) and parsed.path.startswith("/wiki/"):
+            title = unquote(parsed.path.removeprefix("/wiki/"))
+            response = await client.get(
+                f"{parsed.scheme}://{parsed.netloc}/w/api.php",
+                params={
+                    "action": "query",
+                    "prop": "extracts",
+                    "explaintext": 1,
+                    "format": "json",
+                    "titles": title,
+                },
+            )
+            response.raise_for_status()
+            pages = response.json()["query"]["pages"]
+            page = next(iter(pages.values()))
+            text = page.get("extract", "")
+            if not text:
+                raise ValueError(f"No article text found for Wikipedia page: {title}")
+            return page.get("title", title), text
+
         response = await client.get(url)
         response.raise_for_status()
         content_type = response.headers.get("content-type", "")
