@@ -30,10 +30,6 @@ export function AuthPage() {
     if (!ok) return; // error shown via context
   }
 
-  function onKeyDown(e) {
-    if (e.key === "Enter") handleSubmit();
-  }
-
   return (
     <div style={page}>
       <div style={card}>
@@ -51,16 +47,20 @@ export function AuthPage() {
         </div>
 
         {/* Form */}
-        <div style={form}>
+        <form
+          style={form}
+          autoComplete="off"
+          onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
+        >
           <div style={fieldWrap}>
             <label style={label}>Email</label>
             <input
               style={input}
               type="email"
+              autoComplete="off"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={onKeyDown}
               autoFocus
             />
           </div>
@@ -71,10 +71,10 @@ export function AuthPage() {
               <input
                 style={input}
                 type="text"
+                autoComplete="off"
                 placeholder="yourname"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                onKeyDown={onKeyDown}
               />
             </div>
           )}
@@ -85,12 +85,13 @@ export function AuthPage() {
               <input
                 style={{ ...input, paddingRight: 40 }}
                 type={showPass ? "text" : "password"}
+                autoComplete="new-password"
                 placeholder={mode === "register" ? "Min 6 characters" : "Your password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={onKeyDown}
               />
               <button
+                type="button"
                 style={eyeBtn}
                 onClick={() => setShowPass((v) => !v)}
                 tabIndex={-1}
@@ -107,15 +108,15 @@ export function AuthPage() {
           )}
 
           <button
+            type="submit"
             style={submitBtn(loading)}
-            onClick={handleSubmit}
             disabled={loading}
           >
             {loading
               ? (mode === "login" ? "Signing in…" : "Creating account…")
               : (mode === "login" ? "Sign in" : "Create account")}
           </button>
-        </div>
+        </form>
 
         <p style={footer}>
           {mode === "login" ? "Don't have an account? " : "Already have an account? "}
