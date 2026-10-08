@@ -1,3 +1,4 @@
+import asyncio
 import PyPDF2
 import io
 from datetime import datetime, timezone
@@ -17,7 +18,7 @@ async def ingest_pdf(file_bytes: bytes, filename: str) -> DocumentRecord:
     await documents_col().insert_one(record.model_dump())
 
     try:
-        text = _extract_pdf_text(file_bytes)
+        text = await asyncio.to_thread(_extract_pdf_text, file_bytes)
         if not text:
             raise ValueError("No extractable text found in PDF.")
 
@@ -25,7 +26,7 @@ async def ingest_pdf(file_bytes: bytes, filename: str) -> DocumentRecord:
         if not chunks:
             raise ValueError("PDF produced no usable text chunks.")
 
-        embeddings = embed_texts(chunks)
+        embeddings = await asyncio.to_thread(embed_texts, chunks)
 
         ids = [f"{record.id}_{i}" for i in range(len(chunks))]
         metadatas = [
@@ -37,7 +38,7 @@ async def ingest_pdf(file_bytes: bytes, filename: str) -> DocumentRecord:
             }
             for i in range(len(chunks))
         ]
-        upsert_chunks(ids, embeddings, chunks, metadatas)
+        await asyncio.to_thread(upsert_chunks, ids, embeddings, chunks, metadatas)
 
         # Update MongoDB record
         now = datetime.now(timezone.utc)

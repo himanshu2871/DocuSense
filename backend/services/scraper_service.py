@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -117,31 +118,30 @@ async def ingest_url(
         await documents_col().insert_one(record.model_dump())
 
         # ── Chunk + embed ─────────────────────────────────────────────────
-        all_ids, all_embeddings, all_docs, all_metas = [], [], [], []
-        chunk_counter = 0
-
+        page_chunks = []
         for page in pages:
             chunks = chunk_by_paragraphs(page["text"])
-            if not chunks:
-                continue
-            embeddings = embed_texts(chunks)
-            for chunk, emb in zip(chunks, embeddings):
-                all_ids.append(f"{record.id}_{chunk_counter}")
-                all_embeddings.append(emb)
-                all_docs.append(chunk)
-                all_metas.append({
-                    "doc_id":      record.id,
-                    "filename":    label,
-                    "source_type": "url",
-                    "source_url":  page["url"],
-                    "chunk_index": chunk_counter,
-                })
-                chunk_counter += 1
+            page_chunks.extend((page["url"], chunk) for chunk in chunks)
+
+        embeddings = await asyncio.to_thread(
+            embed_texts, [chunk for _, chunk in page_chunks]
+        )
+        all_ids, all_docs, all_metas = [], [], []
+        for chunk_counter, ((source_url, chunk), _) in enumerate(zip(page_chunks, embeddings)):
+            all_ids.append(f"{record.id}_{chunk_counter}")
+            all_docs.append(chunk)
+            all_metas.append({
+                "doc_id":      record.id,
+                "filename":    label,
+                "source_type": "url",
+                "source_url":  source_url,
+                "chunk_index": chunk_counter,
+            })
 
         if not all_ids:
             raise ValueError("Scraped content had no usable text chunks.")
 
-        upsert_chunks(all_ids, all_embeddings, all_docs, all_metas)
+        await asyncio.to_thread(upsert_chunks, all_ids, embeddings, all_docs, all_metas)
 
         # ── Update records ────────────────────────────────────────────────
         now = datetime.now(timezone.utc)
