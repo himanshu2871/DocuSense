@@ -9,7 +9,8 @@ pymongo
 # Groq
 groq
 
-# Embeddings (using cloud API)
+# Local CPU embeddings
+fastembed
 
 # Vector DB
 chromadb

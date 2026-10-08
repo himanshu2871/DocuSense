@@ -13,6 +13,7 @@ export function ChatWindow({
   const [input,       setInput]       = useState("");
   const [streaming,   setStreaming]   = useState(false);
   const [streamText,  setStreamText]  = useState("");
+  const [streamError, setStreamError] = useState("");
   const [streamSrcs,  setStreamSrcs]  = useState([]);
   const [confidence,  setConfidence]  = useState(null);
   const endRef   = useRef(null);
@@ -34,6 +35,7 @@ export function ChatWindow({
   async function _startStream(query, docIds, sessionId) {
     setStreaming(true);
     setStreamText("");
+    setStreamError("");
     setStreamSrcs([]);
     setConfidence(null);
     abortRef.current = new AbortController();
@@ -58,6 +60,7 @@ export function ChatWindow({
       const reader  = res.body.getReader();
       const decoder = new TextDecoder();
       let   buffer  = "";
+      let   completed = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -69,31 +72,37 @@ export function ChatWindow({
 
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
+          let event;
           try {
-            const event = JSON.parse(line.slice(6));
-            if (event.type === "meta") {
-              setStreamSrcs(event.sources || []);
-              if (event.confidence != null) setConfidence(event.confidence);
-            } else if (event.type === "token") {
-              setStreamText((prev) => prev + event.content);
-            } else if (event.type === "done") {
-              setStreaming(false);
-              setStreamText("");
-              setStreamSrcs([]);
-              // Reload session from DB to get persisted messages
-              onSend(null, null, null);
-            } else if (event.type === "error") {
-              throw new Error(event.content);
-            }
-          } catch (_) {}
+            event = JSON.parse(line.slice(6));
+          } catch {
+            continue;
+          }
+
+          if (event.type === "meta") {
+            setStreamSrcs(event.sources || []);
+            if (event.confidence != null) setConfidence(event.confidence);
+          } else if (event.type === "token") {
+            setStreamText((prev) => prev + event.content);
+          } else if (event.type === "done") {
+            completed = true;
+            setStreamText("");
+            setStreamSrcs([]);
+            onSend(null, null, null);
+          } else if (event.type === "error") {
+            throw new Error(event.content || "The chat request failed.");
+          }
         }
       }
+      if (!completed) throw new Error("The response stream ended before the answer completed.");
     } catch (e) {
       if (e.name !== "AbortError") {
         console.error("Stream error:", e.message);
+        setStreamError(e.message);
       }
-      setStreaming(false);
       setStreamText("");
+    } finally {
+      setStreaming(false);
     }
   }
 
@@ -205,6 +214,12 @@ export function ChatWindow({
             {msg.role === "user" && <div style={{ ...avatar, background: "var(--bg-accent)", color: "#fff" }}><User size={18} /></div>}
           </div>
         ))}
+
+        {streamError && (
+          <p role="alert" style={{ color: "var(--status-err-text)", fontSize: 13, margin: "8px 0" }}>
+            {streamError}
+          </p>
+        )}
 
         {/* Live streaming bubble */}
         {streaming && (

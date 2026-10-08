@@ -47,8 +47,19 @@ async function req(method, path, body, isFormData = false) {
     }
   }
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+  if (!res.ok) {
+    const detail = data?.detail ?? data?.message ?? data?.error;
+    const message = typeof detail === "string"
+      ? detail
+      : detail ? JSON.stringify(detail) : `Request failed (${res.status})`;
+    throw new Error(message);
+  }
   return data;
 }
 

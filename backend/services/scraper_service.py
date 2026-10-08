@@ -8,11 +8,9 @@ from core.chunker import chunk_by_paragraphs
 from core.embeddings import embed_texts
 from core.vector_store import upsert_chunks
 
-# Sites that always need Playwright regardless of mode
+# Sites that typically need Playwright for JS-heavy content.
+# Wikipedia pages are usually static HTML and can be scraped with httpx.
 ALWAYS_JS_DOMAINS = {
-    "en.wikipedia.org",
-    "wikipedia.org",
-    "www.wikipedia.org",
     "msn.com",
     "www.msn.com",
     "apple.com",
@@ -62,13 +60,27 @@ async def ingest_url(
         if crawl:
             if use_playwright:
                 from core.playwright_scraper import scrape_js_site
-                pages = await scrape_js_site(url, max_pages=max_pages)
+                try:
+                    pages = await scrape_js_site(url, max_pages=max_pages)
+                except Exception as e:
+                    if mode == "auto":
+                        print(f"[scraper] Playwright crawl failed, falling back to httpx: {e}")
+                        pages = await scrape_site(url, max_pages=max_pages)
+                    else:
+                        raise
             else:
                 pages = await scrape_site(url, max_pages=max_pages)
         else:
             if use_playwright:
                 from core.playwright_scraper import scrape_with_playwright
-                title, text = await scrape_with_playwright(url)
+                try:
+                    title, text = await scrape_with_playwright(url)
+                except Exception as e:
+                    if mode == "auto":
+                        print(f"[scraper] Playwright failed, falling back to httpx: {e}")
+                        title, text = await scrape_url(url)
+                    else:
+                        raise
             else:
                 title, text = await scrape_url(url)
 
