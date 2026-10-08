@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse
 
 # One shared executor for all Playwright calls
-_executor = ThreadPoolExecutor(max_workers=2)
+_executor = ThreadPoolExecutor(max_workers=1)
 
 # Domains that always need Playwright regardless of mode
 ALWAYS_JS_DOMAINS = {
