@@ -45,13 +45,15 @@ async def ingest_url(
     crawl: bool = False,
     max_pages: int = 10,
     mode: Literal["auto", "fast", "js"] = "auto",
+    job: ScrapeJobRecord | None = None,
 ) -> ScrapeJobRecord:
     """
     Scrape a URL (or site), chunk, embed, store.
     mode: "auto" | "fast" | "js"
     """
-    job = ScrapeJobRecord(url=url, status="scraping")
-    await scrape_jobs_col().insert_one(job.model_dump())
+    if job is None:
+        job = ScrapeJobRecord(url=url, status="scraping")
+        await scrape_jobs_col().insert_one(job.model_dump())
 
     try:
         use_playwright = _needs_playwright(url, mode)

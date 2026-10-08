@@ -84,6 +84,7 @@ export const api = {
     req("POST", "/scrape/js", { url }),
 
   listJobs: () => req("GET", "/scrape/jobs"),
+  getJob: (jobId) => req("GET", `/scrape/jobs/${jobId}`),
 
   // ── Sessions ──────────────────────────────────────────────────────────
   createSession: (docIds = []) =>

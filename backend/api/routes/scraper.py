@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from pydantic import BaseModel
 from typing import Literal
 
@@ -19,8 +19,8 @@ def _validate_url(url: str):
         raise HTTPException(400, "URL must start with http:// or https://")
 
 
-@router.post("", response_model=ScrapeJobRecord)
-async def scrape_single_url(payload: ScrapeRequestExtended):
+@router.post("", response_model=ScrapeJobRecord, status_code=status.HTTP_202_ACCEPTED)
+async def scrape_single_url(payload: ScrapeRequestExtended, background_tasks: BackgroundTasks):
     """
     Scrape a single URL.
     mode=auto  → auto-detect JS need (default)
@@ -28,32 +28,42 @@ async def scrape_single_url(payload: ScrapeRequestExtended):
     mode=js    → always use Playwright
     """
     _validate_url(payload.url)
-    job = await ingest_url(url=payload.url, crawl=False, mode=payload.mode)
-    if job.status == "error":
-        raise HTTPException(422, job.error_message or "Failed to scrape URL.")
+    job = ScrapeJobRecord(url=payload.url, status="scraping")
+    await scrape_jobs_col().insert_one(job.model_dump())
+    background_tasks.add_task(
+        ingest_url, url=payload.url, crawl=False, mode=payload.mode, job=job
+    )
     return job
 
 
-@router.post("/crawl", response_model=ScrapeJobRecord)
-async def crawl_site(payload: ScrapeRequestExtended, max_pages: int = 10):
+@router.post("/crawl", response_model=ScrapeJobRecord, status_code=status.HTTP_202_ACCEPTED)
+async def crawl_site(
+    payload: ScrapeRequestExtended,
+    background_tasks: BackgroundTasks,
+    max_pages: int = 10,
+):
     """Crawl an entire website (same domain) up to max_pages pages."""
     _validate_url(payload.url)
     if not 1 <= max_pages <= 50:
         raise HTTPException(400, "max_pages must be between 1 and 50.")
-    job = await ingest_url(url=payload.url, crawl=True,
-                           max_pages=max_pages, mode=payload.mode)
-    if job.status == "error":
-        raise HTTPException(422, job.error_message or "Failed to crawl site.")
+    job = ScrapeJobRecord(url=payload.url, status="scraping")
+    await scrape_jobs_col().insert_one(job.model_dump())
+    background_tasks.add_task(
+        ingest_url, url=payload.url, crawl=True, max_pages=max_pages,
+        mode=payload.mode, job=job,
+    )
     return job
 
 
-@router.post("/js", response_model=ScrapeJobRecord)
-async def scrape_js_url(payload: ScrapeRequest):
+@router.post("/js", response_model=ScrapeJobRecord, status_code=status.HTTP_202_ACCEPTED)
+async def scrape_js_url(payload: ScrapeRequest, background_tasks: BackgroundTasks):
     """Shortcut: always use Playwright — for React SPAs, Cloudflare sites, MSN, etc."""
     _validate_url(payload.url)
-    job = await ingest_url(url=payload.url, crawl=False, mode="js")
-    if job.status == "error":
-        raise HTTPException(422, job.error_message or "Failed to scrape with Playwright.")
+    job = ScrapeJobRecord(url=payload.url, status="scraping")
+    await scrape_jobs_col().insert_one(job.model_dump())
+    background_tasks.add_task(
+        ingest_url, url=payload.url, crawl=False, mode="js", job=job
+    )
     return job
 
 
